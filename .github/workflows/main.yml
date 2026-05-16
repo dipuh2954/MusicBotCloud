@@ -1,0 +1,50 @@
+name: Generate Sheet Music
+
+# This tells GitHub to wait for you to manually click a "Run" button and ask for a URL
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_url:
+        description: 'YouTube Link'
+        required: true
+        type: string
+
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest # Boots up a high-speed Linux server
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install System Dependencies (Kotlin, FFmpeg, MuseScore)
+        run: |
+          sudo snap install --classic kotlin
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg musescore xvfb
+
+      - name: Setup Python & AI Tools
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install yt-dlp basic-pitch
+
+      - name: Compile Kotlin Code
+        # This compiles your raw .kt file into a runnable Java/Kotlin executable
+        run: kotlinc src/Main.kt -include-runtime -d MusicBot.jar
+
+      - name: Run the Pipeline
+        # xvfb-run creates a "virtual screen" so MuseScore doesn't crash on a screenless server
+        run: xvfb-run java -jar MusicBot.jar "${{ github.event.inputs.youtube_url }}"
+
+      - name: Deliver the PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: Violin-Sheet-Music
+          path: FinalSheetMusic.pdf
