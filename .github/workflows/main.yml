@@ -1,6 +1,5 @@
 name: Generate Sheet Music
 
-# Notice how clean this is now! Just a simple click-to-run trigger.
 on:
   workflow_dispatch:
 
@@ -19,7 +18,6 @@ jobs:
           java-version: '17'
 
       - name: Install System Dependencies (Kotlin, MuseScore)
-        # We also removed ffmpeg from here since we don't need to process video anymore!
         run: |
           sudo snap install --classic kotlin
           sudo apt-get update
@@ -29,13 +27,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: pip install basic-pitch
+      # THE FIX IS HERE: We force it to install numpy version 1.x
+      - run: pip install "numpy<2" basic-pitch
 
       - name: Compile Kotlin Code
         run: kotlinc src/Main.kt -include-runtime -d MusicBot.jar
 
       - name: Run the Pipeline
-        # Notice we removed the URL argument at the end of this line too
         run: xvfb-run java -jar MusicBot.jar
 
       - name: Deliver the PDF
