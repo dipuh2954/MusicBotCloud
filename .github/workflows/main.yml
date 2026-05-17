@@ -1,17 +1,12 @@
 name: Generate Sheet Music
 
-# This tells GitHub to wait for you to manually click a "Run" button and ask for a URL
+# Notice how clean this is now! Just a simple click-to-run trigger.
 on:
   workflow_dispatch:
-    inputs:
-      youtube_url:
-        description: 'YouTube Link'
-        required: true
-        type: string
 
 jobs:
   transcribe:
-    runs-on: ubuntu-latest # Boots up a high-speed Linux server
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
@@ -23,25 +18,25 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System Dependencies (Kotlin, FFmpeg, MuseScore)
+      - name: Install System Dependencies (Kotlin, MuseScore)
+        # We also removed ffmpeg from here since we don't need to process video anymore!
         run: |
           sudo snap install --classic kotlin
           sudo apt-get update
-          sudo apt-get install -y ffmpeg musescore xvfb
+          sudo apt-get install -y musescore xvfb
 
       - name: Setup Python & AI Tools
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: pip install yt-dlp basic-pitch
+      - run: pip install basic-pitch
 
       - name: Compile Kotlin Code
-        # This compiles your raw .kt file into a runnable Java/Kotlin executable
         run: kotlinc src/Main.kt -include-runtime -d MusicBot.jar
 
       - name: Run the Pipeline
-        # xvfb-run creates a "virtual screen" so MuseScore doesn't crash on a screenless server
-        run: xvfb-run java -jar MusicBot.jar "${{ github.event.inputs.youtube_url }}"
+        # Notice we removed the URL argument at the end of this line too
+        run: xvfb-run java -jar MusicBot.jar
 
       - name: Deliver the PDF
         uses: actions/upload-artifact@v4
