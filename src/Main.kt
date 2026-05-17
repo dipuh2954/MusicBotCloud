@@ -1,10 +1,8 @@
 import java.io.File
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 fun runCommand(command: String, workingDir: File): Boolean {
     return try {
-        // In Linux/Cloud environments, it's safer to pass the command to the bash shell directly
         val process = ProcessBuilder("bash", "-c", command)
             .directory(workingDir)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -24,31 +22,28 @@ fun runCommand(command: String, workingDir: File): Boolean {
     }
 }
 
-fun main(args: Array<String>) {
-    if (args.isEmpty()) {
-        println("❌ Error: Please provide a YouTube link as an argument.")
-        exitProcess(1)
-    }
-
-    val youtubeLink = args[0]
+// Notice we removed the 'args' requirement since we don't need a URL anymore!
+fun main() {
     val workDir = File(System.getProperty("user.dir"))
 
     val audioFile = "song.mp3"
     val midiFile = "song_basic_pitch.mid"
 
-    println("🎵 Starting Cloud Transcription Pipeline...")
+    println("🎵 Starting Cloud Transcription Pipeline (Manual Upload Mode)...")
 
-    println("\n▶ Step 1: Downloading Audio from YouTube (Using Android Spoof Bypass)...")
-    // We added the --extractor-args flag here to trick YouTube into thinking this is a mobile phone
-    val dlSuccess = runCommand("yt-dlp --extractor-args \"youtube:player_client=android\" -x --audio-format mp3 -o $audioFile \"$youtubeLink\"", workDir)
-    if (!dlSuccess) { println("Failed to download audio. Exiting."); return }
+    // We check to make sure you actually put the file in the right place
+    if (!File(workDir, audioFile).exists()) {
+        println("❌ Error: 'song.mp3' not found in the project root! Please add it and try again.")
+        return
+    }
 
-    println("\n▶ Step 2: AI converting to MIDI...")
+    println("\n▶ Step 1: Skipping Download (Using provided song.mp3)...")
+
+    println("\n▶ Step 2: AI converting to MIDI (This may take a minute)...")
     val aiSuccess = runCommand("basic-pitch ./ $audioFile", workDir)
     if (!aiSuccess) { println("AI processing failed. Exiting."); return }
 
     println("\n▶ Step 3: Generating PDF Sheet Music...")
-    // Using the Linux mscore command without a GUI display
     val pdfSuccess = runCommand("mscore $midiFile -o FinalSheetMusic.pdf", workDir)
     if (!pdfSuccess) { println("PDF generation failed. Exiting."); return }
 
