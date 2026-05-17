@@ -1,5 +1,6 @@
 name: Generate Sheet Music
 
+# A clean, simple trigger with no required inputs
 on:
   workflow_dispatch:
 
@@ -17,18 +18,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install System Dependencies (Kotlin, MuseScore)
+      - name: Install System Dependencies (Kotlin, FFmpeg, MuseScore)
+        # We ensure ffmpeg is here so Demucs/torchcodec can actually read the MP3
         run: |
           sudo snap install --classic kotlin
           sudo apt-get update
-          sudo apt-get install -y musescore xvfb
+          sudo apt-get install -y ffmpeg musescore xvfb
 
       - name: Setup Python & AI Tools
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-        # We just added 'torchcodec' to the very end
-      - run: pip install "numpy<2" basic-pitch demucs torchcodec
+
+      # The master AI toolset: Pinned numpy, Basic Pitch, Demucs, and the audio decoder
+      - name: Install AI Libraries
+        run: pip install "numpy<2" basic-pitch demucs torchcodec
 
       - name: Compile Kotlin Code
         run: kotlinc src/Main.kt -include-runtime -d MusicBot.jar
