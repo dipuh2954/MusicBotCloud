@@ -19,7 +19,6 @@ jobs:
           java-version: '17'
 
       - name: Install System Dependencies (Kotlin, FFmpeg, MuseScore)
-        # We ensure ffmpeg is here so Demucs/torchcodec can actually read the MP3
         run: |
           sudo snap install --classic kotlin
           sudo apt-get update
@@ -30,7 +29,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # The master AI toolset: Pinned numpy, Basic Pitch, Demucs, and the audio decoder
+      # The master AI toolset
       - name: Install AI Libraries
         run: pip install "numpy<2" basic-pitch demucs torchcodec
 
@@ -40,8 +39,9 @@ jobs:
       - name: Run the Pipeline
         run: xvfb-run java -jar MusicBot.jar
 
-      - name: Deliver the PDF
+      # We now deliver the raw MIDI data so you can edit it locally!
+      - name: Deliver the MIDI
         uses: actions/upload-artifact@v4
         with:
-          name: Violin-Sheet-Music
-          path: FinalSheetMusic.pdf
+          name: Violin-MIDI
+          path: vocals_basic_pitch.mid
